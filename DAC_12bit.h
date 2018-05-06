@@ -61,8 +61,8 @@ void DAC_12bit::writePortA(int value_A) {
   //The operation 0b0111000000000000 | (value_A & 0b111111111111) combines the
   //configuration bits and the value.
 
-  SPI.begin();
-  SPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE3));  //https://www.arduino.cc/en/Reference/SPI
+  SPI.begin(); //https://www.arduino.cc/en/Reference/SPI
+  SPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE3));    
   digitalWrite(pin_SS, LOW);
   SPI.transfer16(writeCommand_PortA);
   digitalWrite(pin_SS, HIGH);

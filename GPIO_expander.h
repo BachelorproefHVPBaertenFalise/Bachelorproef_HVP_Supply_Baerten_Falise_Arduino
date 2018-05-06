@@ -23,7 +23,8 @@ class GPIO_expander {
     //Slave select
     byte SS_pin;
 
-    //The registers are explained in the datasheet: http://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf
+    //The registers are explained in the datasheet: 
+    //http://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf
 
     //Opcode Read/Write: p. 15 3.3.2 fig 3-5
     const byte opcode_read  = 0b01000001;

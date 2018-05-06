@@ -58,8 +58,8 @@ int ADC_12bit::getValueChannel(byte channel) {
   byte byte1_send = 0b00000110;
   byte byte2_send = ( (channel - 1) << 6 );
 
-  SPI.begin();
-  SPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE3));  //https://www.arduino.cc/en/Reference/SPI
+  SPI.begin(); //https://www.arduino.cc/en/Reference/SPI
+  SPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE3));  
   digitalWrite(SS_pin, LOW);
   byte byte1_received = SPI.transfer(byte1_send);
   byte byte2_received = SPI.transfer(byte2_send);

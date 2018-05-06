@@ -2,7 +2,8 @@
 
 #include "Arduino.h"
 
-//"Keypad.h" library: Download, installation and example on website https://playground.arduino.cc/Code/Keypad#Download
+//"Keypad.h" library: Download, installation and example on website 
+//https://playground.arduino.cc/Code/Keypad#Download
 
 
 #ifndef NUMPAD_H
@@ -35,7 +36,8 @@ class Numpad {
     byte rowPins[ROWS];       //List of GPIO pins of the Arduino connected to the rows
     byte columnPins[COLUMNS]; //List of GPIO pins of the Arduino connected to the columns
 
-    Keypad keypad = Keypad( makeKeymap(keys), rowPins, columnPins, ROWS, COLUMNS ); //Instantiation of the Keypad object from the "Keypad.h" library
+    //Instantiation of the Keypad object from the "Keypad.h" library
+    Keypad keypad = Keypad( makeKeymap(keys), rowPins, columnPins, ROWS, COLUMNS ); 
 
   public:
     Numpad(byte pin_row1, byte pin_row2, byte pin_row3, byte pin_row4,  //Constructor

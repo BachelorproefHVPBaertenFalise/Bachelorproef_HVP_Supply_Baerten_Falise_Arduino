@@ -1,5 +1,5 @@
 /*
-   Bachelor's thesis: Design and assembly of a control circuit with a microcontroller and a user interface for OEM high voltage modules
+   Bachelor's thesis: Design and assembly of a control circuit with microcontroller and user interface for OEM high voltage modules
    Students: Sven Baerten (sven.baerten@student.uhasselt.be) & Wouter Falise (wouter.falise@student.uhasselt.be)
    Discipline: FIIW 3BA EA-ICT
    Mentors: prof. dr. ir. Michael Daenen & ing. Jorne Carolus
@@ -21,10 +21,10 @@
 */
 enum STATE {
   MAIN,                     //Selection: Standalone or USB
-  STANDALONE,               //Mode: "Voltage Control" or "Constant Current"
+  STANDALONE,               //Mode: "Constant voltage" or "Constant Current"
   USB,                      //USB
-  VOLTAGE_CONTROL,          //Power supply used as voltage supply
-  CONSTANT_CURRENT,         //Power supply used as a current supply
+  CONSTANT_VOLTAGE,         //Power supply used as a constant voltage supply
+  CONSTANT_CURRENT,         //Power supply used as a constant current supply
   EMERGENCY_STOP,           //EMERGENCY STOP
 };
 
@@ -71,8 +71,8 @@ const byte pin_CH2_enable = 5;
 bool CH1_ON = false;
 bool CH2_ON = false;
 
-//Variables used to display more screens on the LCD e.g. in "Voltage Control" there is a screen for the voltages and one for the currents
-bool VOLTAGE_CONTROL_toggle_window = true;
+//Variables used to display more screens on the LCD e.g. in "Constant voltage" there is a screen for the voltages and one for the currents
+bool CONSTANT_VOLTAGE_toggle_window = true;
 bool CONSTANT_CURRENT_toggle_window = true;
 
 const byte pin_emergency_stop = A7;  //Arduino pin connected to the emergency stop, detects if emergency stop is active
@@ -167,9 +167,9 @@ bool USB_command_received = false; //True = USB command received
 char USB_opcode[22];              //The opcode of the USB command
 char USB_parameter[8];            //The parameter of the USB command
 
-//The USB connection times out when USB_watchdog_timer > USB_watchdog_timeout
+//The USB connection times out when millis() - USB_watchdog_timer > USB_watchdog_timeout
 unsigned long USB_watchdog_timer = 0;       //in ms
-unsigned long USB_watchdog_timeout = 10000; //in ms
+unsigned long USB_watchdog_timeout = 12000; //in ms
 /********************/
 
 
@@ -177,7 +177,7 @@ unsigned long USB_watchdog_timeout = 10000; //in ms
    Program setup.
 */
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(38400);
 
   pinMode(pin_emergency_stop, INPUT);
   pinMode(pin_lock, INPUT);
@@ -222,8 +222,8 @@ void loop() {
 
       gpio_expander.clearInterrupt(); //Prevent reading the gpio expander until the next state
 
-      if (key == '*') {           //VOLTAGE CONTROL
-        state = VOLTAGE_CONTROL;
+      if (key == '*') {           //Constant voltage
+        state = CONSTANT_VOLTAGE;
         LCD_writeTemplate = true;
       } else if (key == '#') {
         state = CONSTANT_CURRENT; //CONSTANT CURRENT
@@ -262,24 +262,24 @@ void loop() {
 
       break;
 
-    case VOLTAGE_CONTROL:
+    case CONSTANT_VOLTAGE:
       LCD_update();
 
-      //The VOLTAGE_CONTROL LCD screen can be toggled between:
+      //The CONSTANT_VOLTAGE LCD screen can be toggled between:
       //Template 1: Shows soll and ist voltages
       //Template 2: Shows ist currents
-      if (VOLTAGE_CONTROL_toggle_window == true) { //Template 1 is shown
+      if (CONSTANT_VOLTAGE_toggle_window == true) { //Template 1 is shown
         if (key == '*' && USB_mode == false) {     //Back to STANDALONE
           LCD_writeTemplate = true;
           state = STANDALONE;
           reset();
         } else if (key == '#') {
-          VOLTAGE_CONTROL_toggle_window = false;  //Show template 2
+          CONSTANT_VOLTAGE_toggle_window = false;  //Show template 2
           LCD_writeTemplate = true;
         }
       } else {                                    //Template 2 is shown
         if (key == '#') {
-          VOLTAGE_CONTROL_toggle_window = true;   //Show template 1
+          CONSTANT_VOLTAGE_toggle_window = true;   //Show template 1
           LCD_writeTemplate = true;
         }
       }
@@ -425,8 +425,8 @@ void interrupt_GPIO_expander() {
   //A bit of port A is 0 when a rotary encoder is turned
   if (GPIO_portA != 0b11111111 && button_pushed == false) {
     if (read_switch_LOCK() == false) { //Not locked
-      if (state == VOLTAGE_CONTROL) {
-        //"VOLTAGE_CONTROL" state: Voltage rotary encoders set voltage
+      if (state == CONSTANT_VOLTAGE) {
+        //"CONSTANT_VOLTAGE" state: Voltage rotary encoders set voltage
         //                         and current rotary encoders set current limit
         switch (GPIO_portA) {
           //Rotary 1: CH1_U_SOLL
@@ -547,7 +547,7 @@ void reset() {
 
   LCD_writeTemplate = true;
   LCD_previousUpdate = 0;
-  VOLTAGE_CONTROL_toggle_window = true;
+  CONSTANT_VOLTAGE_toggle_window = true;
   CONSTANT_CURRENT_toggle_window = true;
 
   rot_enc_step_size = 100;
@@ -584,7 +584,7 @@ void LCD_update() {
       if (LCD_writeTemplate == true) {
         lcd.reset();
         lcd.writeTextCursor(1, 1, "       Mode         ");
-        lcd.writeTextCursor(2, 1, "Voltage control  '*'");
+        lcd.writeTextCursor(2, 1, "Constant voltage '*'");
         lcd.writeTextCursor(3, 1, "Constant current '#'");
         lcd.writeTextCursor(4, 1, "Back '0'");
         LCD_writeTemplate = false;
@@ -609,10 +609,10 @@ void LCD_update() {
       }
       break;
 
-    case VOLTAGE_CONTROL:
+    case CONSTANT_VOLTAGE:
       if (LCD_writeTemplate == true) {
         lcd.reset();
-        if (VOLTAGE_CONTROL_toggle_window == true) { //Template with voltages
+        if (CONSTANT_VOLTAGE_toggle_window == true) { //Template with voltages
           if (USB_mode == true) lcd.writeTextCursor(1, 1, "USB  OUT      SET   ");
           else lcd.writeTextCursor(1, 1, "     OUT      SET   ");
           lcd.writeTextCursor(2, 1, "CH1: -    V   -    V");
@@ -633,7 +633,7 @@ void LCD_update() {
         LCD_previousUpdate = millis();
         char voltage[5];
         char current[6];
-        if (VOLTAGE_CONTROL_toggle_window == true) { //Template with voltages
+        if (CONSTANT_VOLTAGE_toggle_window == true) { //Template with voltages
           //CH1
           snprintf(voltage, 5, "%04d", CH1_U_IST); //http://www.cplusplus.com/reference/cstdio/snprintf/
           lcd.writeTextCursor(2, 7, voltage);
@@ -931,15 +931,15 @@ void USB_communication() {
     //USB command is made of 2 sections: e.g. "CH1_U_SOLL/1000\n" with opcode = CH1_U_SOLL and parameter = 1000
 
     //SYN command is used to maintain the connection between the Arduino and the computer
-    //SYN/VC: VC means "Voltage Control" mode
+    //SYN/CV: CV means "Constant voltage" mode
     //SYN/CC: CC means "Constant Current" mode
     if ( (strcmp(USB_opcode, "SYN") == 0) ) {
       //strcmp: https://www.tutorialspoint.com/c_standard_library/c_function_strcmp.htm
-      if ( (strcmp(USB_parameter, "VC") == 0) ) { // SYN/VC "Voltage Control" mode
-        if (state != VOLTAGE_CONTROL) {
+      if ( (strcmp(USB_parameter, "CV") == 0) ) { // SYN/CV "Constant voltage" mode
+        if (state != CONSTANT_VOLTAGE) {
           CH1_turnOFF();
           CH2_turnOFF();
-          state = VOLTAGE_CONTROL;
+          state = CONSTANT_VOLTAGE;
           LCD_writeTemplate = true;
         }
 
@@ -947,7 +947,7 @@ void USB_communication() {
         else Serial.println("ACK/OK");               //OK means active         
         
         USB_connection = true;
-        USB_watchdog_timer = millis();     //Update the watchdog timer
+        USB_watchdog_timer = millis();               //Update the watchdog timer
       }
       else if ( (strcmp(USB_parameter, "CC") == 0) ) { // SYN/CC "Constant Current" mode
         if (state != CONSTANT_CURRENT) {
@@ -965,7 +965,8 @@ void USB_communication() {
       }
     }
 
-    if (USB_connection == true && emergency_stop == false) {  //USB connection is established      
+    if (USB_connection == true && emergency_stop == false) {  
+      //USB connection is established, only executes when there is no emergency stop       
       if ( (strcmp(USB_opcode, "STOP") == 0) ) {
         state = MAIN;
         reset();        
