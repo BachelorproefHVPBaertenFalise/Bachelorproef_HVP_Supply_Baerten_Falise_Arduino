@@ -297,6 +297,7 @@ void loop() {
         //The goal is an output voltage that climbs to the SOLL value
         if (CH1_I_IST > CH1_I_LIMIT) {
           CH1_U_DAC--;
+          if(CH1_U_DAC < 0) CH1_U_DAC = 0;
         } else {
           if (CH1_U_DAC == CH1_U_SOLL + voltage_offset_CH1) ;
           else if (CH1_U_DAC < CH1_U_SOLL + voltage_offset_CH1) CH1_U_DAC++;
@@ -314,6 +315,7 @@ void loop() {
         //Regulator
         if (CH2_I_IST > CH2_I_LIMIT) {
           CH2_U_DAC--;
+          if(CH2_U_DAC < 0) CH2_U_DAC = 0;
         } else {
           if (CH2_U_DAC == CH2_U_SOLL + voltage_offset_CH2) ;
           else if (CH2_U_DAC < CH2_U_SOLL + voltage_offset_CH2) CH2_U_DAC++;
