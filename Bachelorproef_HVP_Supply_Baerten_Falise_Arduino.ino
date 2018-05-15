@@ -62,6 +62,9 @@ const float correction = 1.18;  //Tuning of high voltage module monitors
 //Regulator
 const int voltage_offset_CH1 = 0;   //Calibrating voltage of CH1/2
 const int voltage_offset_CH2 = 0;
+const int voltage_compliance_tolerance = 14;
+const float current_compliance_tolerance = 0.03;
+const int compliance_LED_blink = 600; //blink every 600 ms
 
 //Arduino pins to control the "enable pin" to turn the high voltage module of CH1/2 on or off
 const byte pin_CH1_enable = 6;
@@ -306,6 +309,15 @@ void loop() {
         if (CH1_U_DAC > 2000) CH1_U_DAC = 2000;
         else if (CH1_U_SOLL == 0) CH1_U_DAC = 0;
         DAC_writeVoltage_CH1(CH1_U_DAC); //Write CH1_U_DAC to DAC
+
+        //CH1 LED blinks when the voltage is limited, else the LED is on continuously 
+        static unsigned long CH1_LED_timer_v = 0;
+        if(CH1_U_IST <= CH1_U_SOLL - voltage_compliance_tolerance && CH1_U_IST != 0){
+          if(millis() - CH1_LED_timer_v >= compliance_LED_blink) {
+            CH1_LED = !CH1_LED;
+            CH1_LED_timer_v = millis();
+          }
+        } else CH1_LED = true;
       }
 
       if (CH2_ON == true) { //CH2 is ON
@@ -324,8 +336,19 @@ void loop() {
         if (CH2_U_DAC > 2000) CH2_U_DAC = 2000;
         else if (CH2_U_SOLL == 0) CH2_U_DAC = 0;
         DAC_writeVoltage_CH2(CH2_U_DAC);
-      }
 
+        //CH2 LED blinks when the voltage is limited, else the LED is on continuously 
+        static unsigned long CH2_LED_timer_v = 0;
+        if(CH2_U_IST <= CH2_U_SOLL - voltage_compliance_tolerance && CH2_U_IST != 0){
+          if(millis() - CH2_LED_timer_v >= compliance_LED_blink) {
+            CH2_LED = !CH2_LED;
+            CH2_LED_timer_v = millis();
+          }
+        } else CH2_LED = true;
+      }
+      
+      write_LEDs();
+      
       break;
 
     case CONSTANT_CURRENT:
@@ -369,6 +392,15 @@ void loop() {
         if (CH1_U_DAC > 2000) CH1_U_DAC = 2000;
         else if (CH1_I_SOLL == 0 || CH1_U_DAC < 0) CH1_U_DAC = 0;
         DAC_writeVoltage_CH1(CH1_U_DAC);
+
+        //CH1 LED blinks when the current is limited, else the LED is on continuously 
+        static unsigned long CH1_LED_timer_c = 0;
+        if(CH1_I_IST <= CH1_I_SOLL - current_compliance_tolerance){
+          if(millis() - CH1_LED_timer_c >= compliance_LED_blink) {
+            CH1_LED = !CH1_LED;
+            CH1_LED_timer_c = millis();
+          }
+        } else CH1_LED = true;
       }
 
 
@@ -387,7 +419,18 @@ void loop() {
         if (CH2_U_DAC > 2000) CH2_U_DAC = 2000;
         else if (CH2_I_SOLL == 0 || CH2_U_DAC < 0) CH2_U_DAC = 0;
         DAC_writeVoltage_CH2(CH2_U_DAC);
+
+        //CH2 LED blinks when the current is limited, else the LED is on continuously 
+        static unsigned long CH2_LED_timer_c = 0;
+        if(CH2_I_IST <= CH2_I_SOLL - current_compliance_tolerance){
+          if(millis() - CH2_LED_timer_c >= compliance_LED_blink) {
+            CH2_LED = !CH2_LED;
+            CH2_LED_timer_c = millis();
+          }
+        } else CH2_LED = true;
       }
+            
+      write_LEDs();      
 
       break;
 

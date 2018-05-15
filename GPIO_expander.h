@@ -106,7 +106,7 @@ void GPIO_expander::init() {
 */
 void GPIO_expander::SPI_settings() {
   //https://www.arduino.cc/en/Reference/SPI
-  SPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE3));
+  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
 }
 
 /*
